@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: chess-trainer-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build --workspace=packages/shared && npm run build --workspace=backend
+    startCommand: npm run start --workspace=backend
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
