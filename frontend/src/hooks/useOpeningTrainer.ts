@@ -141,10 +141,12 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
 
       const newFen = chess.fen()
 
+      const historyLength = chess.history().length
       setState((prev) => {
         if (!prev.opening) return prev
         const newMovesPlayed = [...prev.movesPlayed, attempt]
-        const isComplete = newMovesPlayed.length >= prev.opening.moveCount
+        // Complete when the total half-moves played equals the opening's move count
+        const isComplete = historyLength >= prev.opening.moveCount
 
         return {
           ...prev,
@@ -164,7 +166,7 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
       if (
         afterState.status !== 'complete' &&
         afterState.opening &&
-        afterState.movesPlayed.length < afterState.opening.moveCount
+        chess.history().length < afterState.opening.moveCount
       ) {
         const newExplorerResult = await explorer.fetch(newFen)
         setState((prev) => ({
@@ -201,9 +203,10 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
     const newFen = chess.fen()
     const newExplorerResult = await explorer.fetch(newFen)
 
+    const historyLength = chess.history().length
     setState((prev) => {
       if (!prev.opening) return prev
-      const isComplete = prev.movesPlayed.length >= prev.opening.moveCount
+      const isComplete = historyLength >= prev.opening.moveCount
 
       return {
         ...prev,
