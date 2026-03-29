@@ -2,7 +2,9 @@ import { useMemo } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { Chess } from 'chess.js'
 import { ExplorerResult } from '@chess-trainer/shared'
-import type { Square, Arrow } from 'react-chessboard/dist/chessboard/types'
+
+type Square = string
+type Arrow = [Square, Square, string?]
 
 interface TrainingBoardProps {
   fen: string

@@ -36,17 +36,22 @@ export default function Train() {
       .catch((err) => setLoadError(err instanceof Error ? err.message : 'Failed to load opening'))
   }, [openingId])
 
+  const startSession = trainer.startSession
+  const trainerStatus = trainer.status
   useEffect(() => {
-    if (opening && trainer.status === 'idle') {
-      trainer.startSession(opening)
+    if (opening && trainerStatus === 'idle') {
+      startSession(opening)
     }
-  }, [opening, trainer])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opening, trainerStatus, startSession])
 
+  const handleOpponentMove = trainer.handleOpponentMove
   useEffect(() => {
     if (trainer.status === 'opponent_thinking') {
-      trainer.handleOpponentMove()
+      handleOpponentMove()
     }
-  }, [trainer.status])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trainer.status, handleOpponentMove])
 
   if (loadError) {
     return (

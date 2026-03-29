@@ -62,7 +62,8 @@ function classifyMove(
 
 export function useOpeningTrainer(): UseOpeningTrainerReturn {
   const chessRef = useRef<Chess>(new Chess())
-  const [state, setState] = useState<UseOpeningTrainerState>({
+  // Keep a ref to the latest state so callbacks don't go stale
+  const stateRef = useRef<UseOpeningTrainerState>({
     opening: null,
     status: 'idle',
     movesPlayed: [],
@@ -70,6 +71,19 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
     explorerResult: null,
     fen: new Chess().fen(),
   })
+
+  const [state, setStateRaw] = useState<UseOpeningTrainerState>(stateRef.current)
+
+  const setState = useCallback(
+    (updater: UseOpeningTrainerState | ((prev: UseOpeningTrainerState) => UseOpeningTrainerState)) => {
+      setStateRaw((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater
+        stateRef.current = next
+        return next
+      })
+    },
+    []
+  )
 
   const explorer = useLichessExplorer()
 
@@ -81,28 +95,30 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
       const initialFen = chess.fen()
       const explorerResult = await explorer.fetch(initialFen)
 
+      // If user plays Black, White (the opponent) moves first
+      const isOpponentFirst =
+        opening.color === 'black' && chess.turn() === 'w'
+
       setState({
         opening,
-        status: 'user_turn',
+        status: isOpponentFirst ? 'opponent_thinking' : 'user_turn',
         movesPlayed: [],
         feedback: null,
         explorerResult,
         fen: initialFen,
       })
     },
-    [explorer]
+    [explorer, setState]
   )
 
   const handleUserMove = useCallback(
     async (from: string, to: string, promotion?: string) => {
-      setState((prev) => {
-        if (prev.status !== 'user_turn' || !prev.opening) return prev
-        return prev
-      })
+      const current = stateRef.current
+      if (current.status !== 'user_turn' || !current.opening) return
 
       const chess = chessRef.current
       const fenBeforeMove = chess.fen()
-      const currentExplorerResult = state.explorerResult
+      const currentExplorerResult = current.explorerResult
 
       let moveResult
       try {
@@ -144,7 +160,12 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
         }
       })
 
-      if (state.movesPlayed.length + 1 < (state.opening?.moveCount ?? 0)) {
+      const afterState = stateRef.current
+      if (
+        afterState.status !== 'complete' &&
+        afterState.opening &&
+        afterState.movesPlayed.length < afterState.opening.moveCount
+      ) {
         const newExplorerResult = await explorer.fetch(newFen)
         setState((prev) => ({
           ...prev,
@@ -152,16 +173,16 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
         }))
       }
     },
-    [state.explorerResult, state.movesPlayed, state.opening, explorer]
+    [explorer, setState]
   )
 
   const handleOpponentMove = useCallback(async () => {
-    setState((prev) => ({ ...prev, status: 'opponent_thinking' }))
+    const current = stateRef.current
+    const currentExplorerResult = current.explorerResult
 
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     const chess = chessRef.current
-    const currentExplorerResult = state.explorerResult
 
     if (!currentExplorerResult) {
       setState((prev) => ({ ...prev, status: 'user_turn' }))
@@ -192,14 +213,14 @@ export function useOpeningTrainer(): UseOpeningTrainerReturn {
         feedback: null,
       }
     })
-  }, [state.explorerResult, explorer])
+  }, [explorer, setState])
 
   const continueAfterFeedback = useCallback(() => {
     setState((prev) => {
       if (prev.status !== 'move_feedback') return prev
       return { ...prev, status: 'opponent_thinking', feedback: null }
     })
-  }, [])
+  }, [setState])
 
   return {
     ...state,

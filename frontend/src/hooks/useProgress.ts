@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { UserProgress } from '@chess-trainer/shared'
+import { UserProgress, SessionResult } from '@chess-trainer/shared'
 import { fetchProgress, fetchOpeningProgress, submitSession } from '../api/progress'
-import { SessionResult } from '@chess-trainer/shared'
 
 interface UseProgressReturn {
   progress: UserProgress[]
