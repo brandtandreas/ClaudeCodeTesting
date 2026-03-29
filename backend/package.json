@@ -1,0 +1,27 @@
+{
+  "name": "backend",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.0",
+    "@fastify/jwt": "^8.0.0",
+    "@fastify/sensible": "^5.5.0",
+    "bcryptjs": "^2.4.3",
+    "fastify": "^4.28.0",
+    "postgres": "^3.4.0",
+    "zod": "^3.23.0",
+    "@chess-trainer/shared": "*"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.0"
+  }
+}
